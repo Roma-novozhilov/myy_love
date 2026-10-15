@@ -76,7 +76,7 @@
      И каждый её шаг приближает её к тебе.</p>
   <div id="count">--:--:--</div>
   <button id="unlockBtn">🔊 Включить звук и ждать полуночи</button>
-  <button id="startBtn" class="ghost" style="margin-top:12px">Запустить сейчас</button>
+  <button id="startBtn" class="ghost" style="margin-top:12px;display:none">Запустить сейчас</button>
   <p style="font-size:13px;opacity:.55;margin-top:18px">Нажми кнопку со звуком и оставь страницу открытой — всё начнётся само за минуту до полуночи.<br>Экран не блокируй, громкость погромче 🎧</p>
   <audio id="bgm" src="music.mp3" preload="auto" loop playsinline></audio>
 </div>
@@ -192,6 +192,7 @@ $("unlockBtn").onclick = () => {
   const b = $("unlockBtn"); b.textContent = "✓ Звук включён — жди полуночи"; b.style.opacity = .85; b.style.pointerEvents = "none";
 };
 $("startBtn").onclick = () => { unlocked = true; start(); };
+if (q.has("test")) $("startBtn").style.display = "";   // кнопка теста видна только по ссылке с ?test
 $("replay").onclick = () => { $("finale").scrollTop = 0; bgm.pause(); start(); };
 
 /* ---------- фейерверк ---------- */
