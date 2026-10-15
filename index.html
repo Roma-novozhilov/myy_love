@@ -51,7 +51,13 @@
   #photos figure { flex:0 0 min(70vw,260px); margin:0; scroll-snap-align:center; background:#fff8f2; padding:10px 10px 30px;
     border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.5); transform:rotate(var(--r,0deg)); }
   #photos img { width:100%; aspect-ratio:3/4; object-fit:cover; display:block; background:#222; }
+  #photos { scrollbar-width:none; -ms-overflow-style:none; }
+  #photos::-webkit-scrollbar { display:none; }
   #photos:empty { display:none; }
+  #hint { margin:-6px 0 18px; font-size:15px; letter-spacing:.08em; color:var(--gold); opacity:0; transition:opacity 1.6s 1s; }
+  #photos.show + #hint { opacity:.85; animation:nudge 1.8s ease-in-out infinite; }
+  #photos:empty + #hint { display:none; }
+  @keyframes nudge { 0%,100% { transform:translateX(0); } 50% { transform:translateX(8px); } }
   #replay { margin-top:18px; }
 </style>
 </head>
@@ -77,6 +83,7 @@
   <div class="inner">
     <h2 id="finTitle"></h2>
     <div id="photos"></div>
+    <div id="hint">Листай) →</div>
     <div id="lines"></div>
     <button class="ghost" id="replay">↻ посмотреть заново</button>
   </div>
