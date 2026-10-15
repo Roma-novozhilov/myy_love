@@ -133,7 +133,7 @@ const MONTH = "октября";
 
 const $ = id => document.getElementById(id);
 const cv = $("c"), ctx = cv.getContext("2d");
-let W, H_, DPR, proj, pathG, land, borders, graticule, stars = [];
+let W, H_, DPR, proj, pathG, land, landPath, borders, graticule, stars = [];
 
 const world = window.WORLD;
 land = topojson.feature(world, world.objects.land);
@@ -148,6 +148,7 @@ function resize() {
   const padTop = W < H_ ? H_ * 0.22 : 90, pad = 10;
   proj = d3.geoNaturalEarth1().fitExtent([[pad,padTop],[W-pad,H_-pad]], {type:"Sphere"});
   pathG = d3.geoPath(proj, ctx);
+  landPath = new Path2D(); d3.geoPath(proj, landPath)(land);   // для проверки «точка на суше»
   stars = Array.from({length: 140}, () => ({x:Math.random()*W, y:Math.random()*H_, r:Math.random()*1.3+.2, p:Math.random()*6}));
 }
 addEventListener("resize", resize); resize();
@@ -194,6 +195,29 @@ $("unlockBtn").onclick = () => {
 $("startBtn").onclick = () => { unlocked = true; start(); };
 if (q.has("test")) $("startBtn").style.display = "";   // кнопка теста видна только по ссылке с ?test
 $("replay").onclick = () => { $("finale").scrollTop = 0; bgm.pause(); start(); };
+
+/* ---------- пожелания ---------- */
+const WISHES = ["Счастья!","Любви!","Улыбок!","Мечты сбываются ✨","Ты сияешь!","Ты лучшая!","Тепла тебе","Радости каждый день",
+  "Ярких приключений","Только позитив!","Ты — чудо","Здоровья и сил","Исполнения желаний","Красоты и нежности",
+  "Пусть всё получается","Лёгкости во всём","Море любви","Много смеха","Вдохновения!","Будь счастлива","Успехов во всём",
+  "Уюта и тепла","Верных друзей","Незабываемых моментов","Ты моя звёздочка ⭐","Бесконечного света","Пусть сбудется мечта",
+  "Дерзай и сияй","Нежности тебе","Побольше путешествий","Вкусных сюрпризов","Ты невероятная","Только вперёд!",
+  "Хорошего настроения","Волшебства 🪄","Сладких моментов","Пусть мир улыбается тебе","Самира, ты прекрасна",
+  "С днём рождения! 🎂","19 — это только начало","Пусть сердце поёт","Тебе всё по плечу","Звёзд с неба тебе",
+  "Лучший год впереди","Обнимаю тебя крепко","Ты — мой свет","Любимая Самирушка 💗","Пусть всё будет красиво",
+  "Счастливого 19-летия!","Ты заслуживаешь лучшего"];
+const WISH_LIFE = 4.6, floaters = []; let nextWish = 0, wishQueue = [];
+function spawnWish(front, tt) {
+  for (let k = 0; k < 50; k++) {
+    const x = Math.random()*W, y = H_*.18 + Math.random()*H_*.8;
+    if (!ctx.isPointInPath(landPath, x*DPR, y*DPR)) continue;
+    const ll = proj.invert([x, y]);
+    if (!ll || ll[0] < front + 3 || ll[1] < -58) continue;      // только уже накрытая суша, без Антарктиды
+    if (!wishQueue.length) wishQueue = WISHES.slice().sort(() => Math.random() - .5);
+    floaters.push({x, y, text: wishQueue.pop(), born: tt, size: W < 500 ? 15 : 19 + Math.random()*4});
+    return;
+  }
+}
 
 /* ---------- фейерверк ---------- */
 function burst(x, y, n = 60) {
@@ -303,6 +327,21 @@ function frame(now) {
       }
     }
   }
+
+  // всплывающие пожелания (только на суше, куда уже дошла аура)
+  if (e >= 0 && front < 172 && tt > nextWish && floaters.length < 9) { nextWish = tt + .7 + Math.random()*.5; spawnWish(front, tt); }
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (let i = floaters.length-1; i >= 0; i--) {
+    const f = floaters[i], age = tt - f.born;
+    if (age > WISH_LIFE) { floaters.splice(i,1); continue; }
+    const a = Math.min(age/.7, 1) * Math.min((WISH_LIFE-age)/1.1, 1);
+    ctx.save();
+    ctx.globalAlpha = a; ctx.font = `italic ${f.size}px Georgia,serif`;
+    const w = ctx.measureText(f.text).width, x = Math.min(Math.max(f.x, w/2+8), W-w/2-8), y = f.y - age*9;
+    ctx.shadowColor = "rgba(255,200,110,.95)"; ctx.shadowBlur = 14; ctx.fillStyle = "#fffaf0";
+    ctx.fillText(f.text, x, y); ctx.restore();
+  }
+  ctx.textBaseline = "alphabetic";
 
   // её звезда
   const hp = proj([H.lon, H.lat]);
